@@ -383,6 +383,9 @@ names(myTab2)[1:2] = c("FID","IID")
 write.table(myTab2,
             file = paste0(data_QC,"/01_Prep_01_ukb_covariates.txt"), 
             col.names = T, row.names = F, quote = F,sep = "\t")
+write.table(myTab2[ancestry2==1,],
+            file = paste0(data_QC,"/01_Prep_01_ukb_covariates_noAncestry.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
 
 #' - **Phenotype file format**: Line 1 : Header with FID, IID and P phenotypes names. Followed by lines of P+2 values. Space/tab separated. Each line contains individual FID and IID followed by P phenotype values (for binary traits, must be coded as 0=control, 1=case, NA=missing unless using --1).
 #' 

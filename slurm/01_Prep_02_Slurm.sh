@@ -13,7 +13,7 @@
 ## Enter the wall-clock time limit for your jobs.
 ## If jobs reach this limit they are automatically killed.
 ## Maximum value 36:00:00.
-#SBATCH --time=04:00:00
+#SBATCH --time=06:00:00
 
 ## For single-core jobs, this number should be '1'. 
 ## If your job has built-in parallelism, eg using OpenMP or 
@@ -113,7 +113,7 @@ plink2 \
   --mind 0.1 \
   --threads 20 \
   --write-snplist --write-samples --no-id-header \
-  --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass 
+  --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass
   
 # 3. regenie step 1
 #
@@ -125,13 +125,11 @@ regenie \
   --extract /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass.snplist \
   --keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass.id \
   --phenoFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_phenotypes_PCSK9.txt \
-  --covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates.txt \
-  --catCovarList smoking, gArray
+  --covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates_noAncestry.txt \
   --threads 20 \
-  --bt \
   --bsize 1000 \
   --lowmem \
-  --lowmem-prefix tmpdir/regenie_tmp_preds \
+  --lowmem-prefix /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/tmpdir/regenie_tmp_preds \
   --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9
   
 # 4. regenie step 2
@@ -144,11 +142,9 @@ regenie \
   --ref-first \
   --sample /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes-imputed/ukb22828_c1_b0_v3_s487160.sample \
   --phenoFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_phenotypes_PCSK9.txt \
-  --covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates.txt \
-  --catCovarList smoking, gArray
-  --bt \
+  --covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates_noAncestry.txt \
   --firth --approx --pThresh 0.01 \
-  --pred ukb_step1_BT_pred.list \
+  --pred /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_BT_pred.list \
   --bsize 400 \
   --threads 20 \
   --split \
