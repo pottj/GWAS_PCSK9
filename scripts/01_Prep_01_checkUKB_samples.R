@@ -90,8 +90,8 @@ myTab[gBatch<0,gArray := "BiLEVE"]
 myTab[,table(gArray, sex)]
 
 #' Save as temporary file 
-save(myTab, file = paste0(data_QC,"/01_Prep_01_UKB_PCSK9.RData"))
-load(paste0(data_QC,"/01_Prep_01_UKB_PCSK9.RData"))
+save(myTab, file = paste0(data_QC,"/01_Prep_01_ukb_PCSK9.RData"))
+# load(paste0(data_QC,"/01_Prep_01_ukb_PCSK9.RData"))
 
 #' ## Proteomics data ####
 #' 
@@ -110,8 +110,8 @@ myTab[,PCSK9 := olink_data[matched,result]]
 myTab = myTab[!is.na(PCSK9),]
 
 #' Save as temporary file 
-save(myTab, file = paste0(data_QC,"/01_Prep_01_UKB_PCSK9.RData"))
-load(paste0(data_QC,"/01_Prep_01_UKB_PCSK9.RData"))
+save(myTab, file = paste0(data_QC,"/01_Prep_01_ukb_PCSK9.RData"))
+# load(paste0(data_QC,"/01_Prep_01_ukb_PCSK9.RData"))
 
 #' # Checks ####
 #' ***
@@ -345,49 +345,56 @@ ggsave(plot = p5.3, filename = paste0("../results/_figures/Boxplot_Pre_Age.png")
 
 #' # Create input for regenie ####
 #' ***
-#' - **Sample inclusion/exclusion file format**: No header. Each line starts with individual FID IID. Space/tab separated.
+#' ## Filter for EUR ancestry
+#' 
+save(myTab, file = paste0(data_QC,"/01_Prep_01_ukb_PCSK9_filtered.RData"))
+
+myTab = myTab[ancestry2 == "1 - White",]
+save(myTab, file = paste0(data_QC,"/01_Prep_01_ukb_PCSK9_filtered_EUR.RData"))
+
+#' ## Sample inclusion 
+#' 
+#' **Sample inclusion/exclusion file format**: No header. Each line starts with individual FID IID. Space/tab separated.
+#' 
+#' Needed for the generation of the bed/bim/fam files for regenie step 1
 #' 
 myTab1 = copy(myTab)
 myTab1[,IID := ID]
 setnames(myTab1,"ID","FID")
 myTab1 = myTab1[,c(1,35)]
 write.table(myTab1,
-            file = paste0(data_QC,"/01_Prep_01_SampleList_all.txt"), 
+            file = paste0(data_QC,"/01_Prep_01_ukb_SampleList_EUR.txt"), 
             col.names = F, row.names = F, quote = F)
 
-filt = myTab$ancestry2 == "1 - White"
-write.table(myTab1[filt,],
-            file = paste0(data_QC,"/01_Prep_01_SampleList_White.txt"), 
-            col.names = F, row.names = F, quote = F)
-write.table(myTab1[!filt,],
-            file = paste0(data_QC,"/01_Prep_01_SampleList_notWhite.txt"), 
-            col.names = F, row.names = F, quote = F)
-
-#' - **Covariate file format**: Line 1 : Header with FID, IID and C covariate names. Followed by lines of C+2 values. Space/tab separated. Each line contains individual FID and IID followed by C covariate values.
+#' ## Covariate file 
 #' 
-#' This includes: age, smoking, BMI, gArray, gPC1 - 10, ancestry3
+#' **Covariate file format**: Line 1 : Header with FID, IID and C covariate names. Followed by lines of C+2 values. Space/tab separated. Each line contains individual FID and IID followed by C covariate values.
 #' 
-myNames = c("ID", "age", "smoking", "BMI", "gArray", "gPC_1","gPC_2","gPC_3","gPC_4","gPC_5","gPC_6","gPC_7","gPC_8","gPC_9", "gPC_10", "ancestry2") 
+#' Same file for regenie step 1 and step 2.
+#' 
+#' This includes: age, smoking, BMI, gArray, gPC1 - 10
+#' 
+myNames = c("ID", "age", "smoking", "BMI", "gArray", "gPC_1","gPC_2","gPC_3","gPC_4","gPC_5","gPC_6","gPC_7","gPC_8","gPC_9", "gPC_10") 
 
 myTab2 = copy(myTab)
 colsOut<-setdiff(colnames(myTab2),myNames)
 myTab2[,get("colsOut"):=NULL]
 setcolorder(myTab2,myNames)
 dim(myTab2)
-myTab2[,ancestry2 := gsub(" - .*","",ancestry2)]
 myTab2[,gArray := gsub("Axiom","1",gArray)]
 myTab2[,gArray := gsub("BiLEVE","0",gArray)]
 myTab2 = cbind(myTab2$ID,myTab2)
 names(myTab2)[1:2] = c("FID","IID")
 
 write.table(myTab2,
-            file = paste0(data_QC,"/01_Prep_01_ukb_covariates.txt"), 
-            col.names = T, row.names = F, quote = F,sep = "\t")
-write.table(myTab2[ancestry2==1,],
-            file = paste0(data_QC,"/01_Prep_01_ukb_covariates_noAncestry.txt"), 
+            file = paste0(data_QC,"/01_Prep_01_ukb_covariates_EUR.txt"), 
             col.names = T, row.names = F, quote = F,sep = "\t")
 
-#' - **Phenotype file format**: Line 1 : Header with FID, IID and P phenotypes names. Followed by lines of P+2 values. Space/tab separated. Each line contains individual FID and IID followed by P phenotype values (for binary traits, must be coded as 0=control, 1=case, NA=missing unless using --1).
+#' ## Phenotype file
+#' 
+#' **Phenotype file format**: Line 1 : Header with FID, IID and P phenotypes names. Followed by lines of P+2 values. Space/tab separated. Each line contains individual FID and IID followed by P phenotype values (for binary traits, must be coded as 0=control, 1=case, NA=missing unless using --1).
+#' 
+#' 6 files with one phenotype each for regenie step 1; and 1 file with all six phenotypes for regenie step 2. Reason: step 1 will mean-impute missing phenotypes, but I don't want that for my subgroups as they are independent (no overlaps).  
 #' 
 myTab3 = copy(myTab)
 myTab3[group == "men" & lipidMeds==0,PCSK9_men_free := PCSK9]
@@ -401,12 +408,26 @@ myTab3 = cbind(myTab3$ID,myTab3$ID,myTab3[,c(35:40)])
 names(myTab3)[1:2] = c("FID","IID")
 
 write.table(myTab3,
-            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_PCSK9.txt"), 
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step2_PCSK9.txt"), 
             col.names = T, row.names = F, quote = F,sep = "\t")
-
-#' # Save data ####
-#' ***
-save(myTab, file = paste0(data_QC,"/01_Prep_01_UKB_PCSK9_filtered.RData"))
+write.table(myTab3[,c(1,2,3)],
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_1.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
+write.table(myTab3[,c(1,2,4)],
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_2.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
+write.table(myTab3[,c(1,2,5)],
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_3.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
+write.table(myTab3[,c(1,2,6)],
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_4.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
+write.table(myTab3[,c(1,2,7)],
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_5.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
+write.table(myTab3[,c(1,2,8)],
+            file = paste0(data_QC,"/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_6.txt"), 
+            col.names = T, row.names = F, quote = F,sep = "\t")
 
 #' # SessionInfo ####
 #' ***
