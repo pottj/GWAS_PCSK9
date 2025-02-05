@@ -8,12 +8,12 @@
 ## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
 
 ## Enter a short name for the job, to be shown in SLURM output
-#SBATCH -J 2_regenie1
+#SBATCH -J 1_PrepData
 
 ## Enter the wall-clock time limit for your jobs.
 ## If jobs reach this limit they are automatically killed.
 ## Maximum value 36:00:00.
-#SBATCH --time=00:30:00
+#SBATCH --time=01:00:00
 
 ## For single-core jobs, this number should be '1'. 
 ## If your job has built-in parallelism, eg using OpenMP or 
@@ -49,7 +49,7 @@
 ## Start multiple jobs at once.
 ## Note that resources (cores, memory, time) requested above are for each
 ## individual array task, NOT the total array.
-#SBATCH --array=1-6
+## #SBATCH --array=3-10
 
 ##  - - - - - - - - - - - - - -
 
@@ -63,7 +63,8 @@ module load rhel8/default-icl              # REQUIRED - loads the basic environm
 
 # Load the latest R version.
 # Before running your code, you should run R and install any required packages.
-module load ceuadmin/regenie/3.2.9
+module load R/4.3.1-icelake
+module load plink/1.9
 
 # If using the GPU cluster, replace the third line with the uncommented line:
 # module load rhel8/default-amp
@@ -74,20 +75,49 @@ module load ceuadmin/regenie/3.2.9
 
 ## Section 3: Run your application
 
-## Step 4: run regenie step 1 per phenotype
+## Step 1: create input 
 #
-# Whole genome regression model is fit at a subset of the total set of available genetic markers and get Leave One Chromosome Out (LOCO) predictions
+# Step 1 and 2 of regenie need the necessary sample files for the --keep, --phenoFile and --covarFile commands
 
-regenie \
-  --step 1 \
-  --bed /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/ukb_cal_allChrs \
-  --extract /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass.snplist \
-  --keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass.id \
-  --phenoFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_${SLURM_ARRAY_TASK_ID}.txt \
-  --covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates_EUR.txt \
+R CMD BATCH --vanilla ../scripts/01_Prep_01_checkUKB_samples.R ../scripts/01_Prep_01_checkUKB_samples.R.out
+cp Rplots.pdf 01_Prep_01_Rplots.pdf
+rm Rplots.pdf
+
+## Step 2: preparing the genotype file
+#
+# Step 1 of regenie needs 1 genotype file (not just imputed genedosages)
+
+rm -f /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/list_beds.txt
+for chr in {2..22}; do echo "/rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes/ukb22418_c${chr}_b0_v2.bed /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes/ukb_snp_chr${chr}_v2.bim /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes/ukb22418_c1_b0_v2_s488131.fam" >> /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/list_beds.txt; done
+
+plink \
+  --bed /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes/ukb22418_c1_b0_v2.bed \
+  --bim /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes/ukb_snp_chr1_v2.bim \
+  --fam /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes/ukb22418_c1_b0_v2_s488131.fam \
   --threads 20 \
-  --bsize 1000 \
-  --lowmem \
-  --lowmem-prefix /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/tmpdir/regenie_tmp_preds \
-  --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_${SLURM_ARRAY_TASK_ID}
-  
+  --keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_SampleList_EUR.txt \
+  --merge-list /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/list_beds.txt \
+  --make-bed --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/ukb_cal_allChrs
+
+# Check if exit code != 0 for last command (plink)
+retVal =$?
+if [ $retVal -ne 0 ]; then
+    echo "Error"
+    exit $retVal 
+fi 
+
+## Step 3: Exclusion files
+#
+# QC applied to the generated genotype file per SNP (MAF, MAC, missing genotype rates per SNP, and HWE) and samples (missing genotype rates per sample)
+
+module unload plink
+module load plink/2.00-alpha
+
+plink2 \
+  --bfile /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/ukb_cal_allChrs \
+  --keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_SampleList_EUR.txt \
+  --maf 0.01 --mac 100 --geno 0.1 --hwe 1e-15 \
+  --mind 0.1 \
+  --threads 20 \
+  --write-snplist --write-samples --no-id-header \
+  --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass

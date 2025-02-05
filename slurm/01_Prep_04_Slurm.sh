@@ -8,12 +8,12 @@
 ## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
 
 ## Enter a short name for the job, to be shown in SLURM output
-#SBATCH -J 2_regenie1
+#SBATCH -J regenieStep2
 
 ## Enter the wall-clock time limit for your jobs.
 ## If jobs reach this limit they are automatically killed.
 ## Maximum value 36:00:00.
-#SBATCH --time=00:30:00
+#SBATCH --time=06:00:00
 
 ## For single-core jobs, this number should be '1'. 
 ## If your job has built-in parallelism, eg using OpenMP or 
@@ -49,7 +49,7 @@
 ## Start multiple jobs at once.
 ## Note that resources (cores, memory, time) requested above are for each
 ## individual array task, NOT the total array.
-#SBATCH --array=1-6
+#SBATCH --array=1-22
 
 ##  - - - - - - - - - - - - - -
 
@@ -72,22 +72,26 @@ module load ceuadmin/regenie/3.2.9
 
 ## - - - - - - - - - - -
 
-## Section 3: Run your application
-
-## Step 4: run regenie step 1 per phenotype
+## Step 5b: run regenie step 2 per chromosome
 #
-# Whole genome regression model is fit at a subset of the total set of available genetic markers and get Leave One Chromosome Out (LOCO) predictions
+# For quantitative traits, we use a linear regression model for association testing.
+#
+# - Covariates are regressed out of the phenotypes and genetic markers.
+# - The LOCO predictions from Step 1 are removed from the phenotypes.
+# - Linear regression is then used to test association of the residualized phenotype and the genetic marker.
+# - Parallel linear algebra operations in the Eigen library are used where possible.
+#
 
 regenie \
-  --step 1 \
-  --bed /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/ukb_cal_allChrs \
-  --extract /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass.snplist \
-  --keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass.id \
-  --phenoFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_${SLURM_ARRAY_TASK_ID}.txt \
+  --step 2 \
+  --bgen /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes-imputed/ukb22828_c${SLURM_ARRAY_TASK_ID}_b0_v3.bgen \
+  --ref-first \
+  --sample /rds/user/jp2047/rds-mrc-bsu-csoP2nj6Y6Y/biobank/genotypes-imputed/ukb22828_c${SLURM_ARRAY_TASK_ID}_b0_v3_s487160.sample \
+  --phenoFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_phenotypes_EUR_step2_PCSK9.txt \
   --covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates_EUR.txt \
+  --firth --approx --pThresh 0.01 \
+  --pred /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_pred.list \
+  --bsize 400 \
   --threads 20 \
-  --bsize 1000 \
-  --lowmem \
-  --lowmem-prefix /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/tmpdir/regenie_tmp_preds \
-  --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_${SLURM_ARRAY_TASK_ID}
-  
+  --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step2_PCSK9_chr${SLURM_ARRAY_TASK_ID}
+ 
