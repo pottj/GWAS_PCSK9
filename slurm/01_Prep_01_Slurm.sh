@@ -121,3 +121,13 @@ plink2 \
   --threads 20 \
   --write-snplist --write-samples --no-id-header \
   --out /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass
+
+plink2 \
+--bfile /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/ukb_cal_allChrs \
+--keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_SampleList_EUR_extra.txt \
+--maf 0.01 --mac 100 --geno 0.1 --hwe 1e-15 \
+--mind 0.1 \
+--threads 20 \
+--write-snplist --write-samples --no-id-header \
+--out /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass_extra
+

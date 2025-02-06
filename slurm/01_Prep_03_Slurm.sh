@@ -70,16 +70,24 @@ module load rhel8/default-icl              # REQUIRED - loads the basic environm
 #! Insert additional module load commands after this line if needed:
 
 ## - - - - - - - - - - -
+module load ceuadmin/regenie/3.2.9
+
+regenie \
+--step 1 \
+--bed /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/ukb_cal_allChrs \
+--extract /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass_extra.snplist \
+--keep /rds/user/jp2047/hpc-work/GWAS_PCSK9/UKB_genetics/qc_pass_extra.id \
+--phenoFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_phenotypes_EUR_step1_PCSK9_6.txt \
+--covarFile /rds/user/jp2047/hpc-work/GWAS_PCSK9/01_Prep_01_ukb_covariates_EUR.txt \
+--threads 20 \
+--bsize 1000 \
+--lowmem \
+--lowmem-prefix /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/tmpdir/regenie_tmp_preds \
+--out /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_6
+
 
 ## Step 5a: merge prediction files 
 #
 
-cat \
-/rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_1_pred.list \ 
-/rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_2_pred.list \
-/rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_3_pred.list \ 
-/rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_4_pred.list \ 
-/rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_5_pred.list \
-/rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_6_pred.list \ 
- > /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_pred.list
+cat /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_1_pred.list /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_2_pred.list /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_3_pred.list /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_4_pred.list /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_5_pred.list /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_6_pred.list > /rds/user/jp2047/hpc-work/GWAS_PCSK9/regenie/ukb_step1_PCSK9_pred.list
 
