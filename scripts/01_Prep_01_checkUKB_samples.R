@@ -366,6 +366,12 @@ write.table(myTab1,
             file = paste0(data_QC,"/01_Prep_01_ukb_SampleList_EUR.txt"), 
             col.names = F, row.names = F, quote = F)
 
+filt = myTab$group == "pre" & myTab$lipidMeds==1
+table(filt)
+write.table(myTab1[filt,],
+            file = paste0(data_QC,"/01_Prep_01_ukb_SampleList_EUR_extra.txt"), 
+            col.names = F, row.names = F, quote = F)
+
 #' ## Covariate file 
 #' 
 #' **Covariate file format**: Line 1 : Header with FID, IID and C covariate names. Followed by lines of C+2 values. Space/tab separated. Each line contains individual FID and IID followed by C covariate values.
