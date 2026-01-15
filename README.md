@@ -1,10 +1,10 @@
 # GWAS of PCSK9 levels in the UK Biobank
 
-last updated: 04/02/2025
+last updated: 15/01/2025
 
 ## Aim 
 
-Last year, I published my meta-GWAS of PCSK9, including 6 European cohorts (LIFE-Heart, LIFE-Adult, LURIC, TwinGene, KORA-F3, and GCKD) ([Pott et al., 2024](https://doi.org/10.1186/s13293-024-00602-6)). This was done double-stratified for both sex and lipid medication (using ATC Classification System code C10 for lipid modifying agents). 
+In 2024, I published a meta-GWAS of PCSK9, including 6 European cohorts (LIFE-Heart, LIFE-Adult, LURIC, TwinGene, KORA-F3, and GCKD) ([Pott et al., 2024](https://doi.org/10.1186/s13293-024-00602-6)). This was done double-stratified for both sex and lipid medication (using ATC Classification System code C10 for lipid modifying agents). 
 
 Now, I want to repeat this analysis in the UKB (replication approach). I want to replicate:
 
