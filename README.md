@@ -4,7 +4,7 @@ last updated: 04/02/2025
 
 ## Aim 
 
-Last year, I published my meta-GWAS of PCSK9, including 6 European cohorts (LIFE-Heart, LIFE-Adult, LURIC, TwinGene, KORA-F3, and GCKD). This was done double-stratified for both sex and lipid medication (using ATC Classification System code C10 for lipid modifying agents). 
+Last year, I published my meta-GWAS of PCSK9, including 6 European cohorts (LIFE-Heart, LIFE-Adult, LURIC, TwinGene, KORA-F3, and GCKD) ([Pott et al., 2024](https://doi.org/10.1186/s13293-024-00602-6)). This was done double-stratified for both sex and lipid medication (using ATC Classification System code C10 for lipid modifying agents). 
 
 Now, I want to repeat this analysis in the UKB (replication approach). I want to replicate:
 
@@ -23,34 +23,39 @@ In addition, I want to check if there are different effects between pre- and pos
 
 ## Analysis plans
 
-1) Prepare PCSK9 data from the UKB 
-2) Run GWAS using REGENIE
-3) Run meta-GWAS for men, women, statin-free and statin-treated groups
-4) Create data files with same structure as in meta-GWAS
-5) GWAS replication check: test SNPs from [Pott et al., 2024](https://doi.org/10.1186/s13293-024-00602-6) if still genome-wide significantly associated
-6) Run GCTA to identify independent signals at PCSK9 gene region
-7) Interaction test: compare effect between 
+1) Prepare PCSK9 and LDL-C data from the UKB
+    - Filter for pairwise kinship less than 10, consent still active (as of 18/08/2025), genetic sex == data base sex, no missing information for smoking or BMI
+    - lipid lowering medication: ATC C10 coding
+    - menopausal status: 
+        - premenopausal: had menopause == no AND age<=50
+        - postmenopausal: had menopause == yes AND age>=60
+    - PCSK9 data set: anyone with PCSK9 measurement
+    - LDL-C data set: anyone without PCSK9 measurement
+    - 7 groups: 
+        - men: sex == 1, with and without lipid lowering treatment
+        - women: sex == 2, with and without lipid lowering treatment
+        - postmenopausal: status == postmenopausal, with and without lipid lowering treatment
+        - premenopausal: status == premenopausal, without lipid lowering treatment (only 200 treated)
+2) Prepare UKB genetic data (PLINK 1.9)
+    - create per biomarker one PLINK BED file set for REGENIE step 1
+    - exclude SNPs with maf<0.01, mac<100, geno>=0.1 and HWE p-value<=1e-15
+    - exclude samples for mind>= 0.1 (sample genotype missing rate)
+3) Run REGENIE (v3.2.9) Step 1
+    - done for each strata separately, as otherwise REGENIE would mean impute the missing phenotype data
+    - adjusted for age, age squared, current smoking, log(BMI), genetic array (axiom or believe), genetic PCs (1-10)[, PPP batch number, PPP probe storage time on ice (time difference between blood draw and PPP measurement), in case of PCSK9]
+4) Run REGENIE (v3.2.9) Step 2
+    - done per chromosome (bgen files)
+5) Create Summary Statistics file
+    - same format as in previous work
+6) Identify associated loci
+7) Test if hits from previous work are replicated
+8) Interaction test 
     - pre- and post-menopausal women
     - men and post-menopausal women
     - men and pre-menopausal women
     - statin-free and statin-treated
-8) Interaction replication check: test replicated signals for sex- and statin interaction
-9) MR replication check: PCSK9 on LDL-C per subgroup
-    - create LDL-C summary statistics with similar strata (UKB only)
-    - test cis-MR only 
-10) MVMR test for time-varying effect on LDL-C and/or CAD
-    - using publicly available summary statistics
-    - test cis instruments only
-11) Combine meta-GWAS and UKB data 
-    - women, statin-treated
-    - women, statin-free
-    - women
-    - men, statin-treated
-    - men, statin-free
-    - men
-    - sex-combined, statin-treated
-    - sex-combined, statin-free
-    - sex-combined, statin-combined
+9) Mendelian Randomization of PCSK9 and LDL-C on CAD
+10) Combine meta-GWAS and UKB data 
 
 ## Abbreviations
 
