@@ -8,18 +8,18 @@
 ## Full documentation can be found here: https://slurm.schedmd.com/sbatch.html
 
 ## Enter a short name for the job, to be shown in SLURM output
-#SBATCH -J GWAS_PCSK9_3
+#SBATCH -J GWAS_PCSK9_4
 
 ## Enter the wall-clock time limit for your jobs.
 ## If jobs reach this limit they are automatically killed.
 ## Maximum value 36:00:00.
-#SBATCH --time=12:00:00
+#SBATCH --time=00:10:00
 
 ## For single-core jobs, this number should be '1'. 
 ## If your job has built-in parallelism, eg using OpenMP or 
 ## R's foreach() and doParallel(), increase this number as desired.
 ## The maximum value is 76 on icelake; 112 on sapphire
-#SBATCH --cpus-per-task=50
+#SBATCH --cpus-per-task=1
 
 ## Each task is allocated 3.3G (icelake) or 6.7G (icelake-himem) or 4.6G (sapphire)
 ## If this is insufficient, uncomment and edit this line.
@@ -49,8 +49,7 @@
 ## Start multiple jobs at once.
 ## Note that resources (cores, memory, time) requested above are for each
 ## individual array task, NOT the total array.
-## #SBATCH --array=1-22
-#SBATCH --array=2
+## #SBATCH --array=3-10
 
 ##  - - - - - - - - - - - - - -
 
@@ -64,7 +63,7 @@ module load rhel8/default-icl              # REQUIRED - loads the basic environm
 
 # Load the latest R version.
 # Before running your code, you should run R and install any required packages.
-module load ceuadmin/regenie/3.2.9
+module load R/4.3.1-icelake
 
 # If using the GPU cluster, replace the third line with the uncommented line:
 # module load rhel8/default-amp
@@ -75,8 +74,10 @@ module load ceuadmin/regenie/3.2.9
 
 ## Section 3: Run your application
 
-## Step 4: regenie step 2 per chromosome
-bash 04_regenie_step2.sh
+## Step 5: get all relevant information for Table 1
+
+R CMD BATCH --vanilla 05_getDescriptiveStatistics.R 05_getDescriptiveStatistics.R.out
+
 
 
 ###############################################################
